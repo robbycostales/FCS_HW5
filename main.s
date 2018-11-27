@@ -2,11 +2,13 @@
 
 EncryptedPhrase: .word 0x5f7fb06, 0xfb06f2f8, 0xc0704fb, 0xf9fbf7f3, 0x6f306fb, 0x700f809, 0xf805f30b, 0xf300f808, 0xf7080706, 0x60700f8, 0x8f3faf3, 0x4f5f2f7, 0xf7fdf5f4, 0x801f2f7, 0x1f5f304, 0xf2f6f7f7, 0x605f7ff, 0xf2f7f9f3, 0xfaf401f7, 0x0				# 20 length
 
+
+
+DecryptionSpace: .space 400 # 400 bytes of space, more than enough...
+
 End: .asciiz "That's All!"
 Found: .asciiz "Word found: "
 NewLine: .asciiz "\n"
-
-DecryptionSpace: .space 400 # 400 bytes of space, more than enough...
 
 # .globl main
 # .globl WordDecrypt
@@ -17,12 +19,11 @@ DecryptionSpace: .space 400 # 400 bytes of space, more than enough...
 
 main:
 	la $t3, EncryptedPhrase			# put address of list into $t3
-	li $t7, 0x01010101					# initialize current key
+	la $t7, 0x01010101					# initialize current key
 
 	# iterate through 255 different keys
 mainLoop:
 	move $a0, $t3								# encrypted phrase --> first parameter
-
 	move $a2, $t7								# current key --> third parameter
 	beq $a2, 0xFFFFFFFF, end
 
@@ -49,7 +50,7 @@ mainLoop:
 	lw $t7, -16($sp)
 	lw $t6, -20($sp)
 
-	beq $v0, 1, Found						# if valid, we found the right key
+	beq $v0, 1, found						# if valid, we found the right key
 addForNext:
 	li $t6, 0x01010101					# add $t6 to key every iteration
 	addu $t7, $t7, $t6
