@@ -2,12 +2,10 @@
 
 EncryptedPhrase: .word 0x5f7fb06, 0xfb06f2f8, 0xc0704fb, 0xf9fbf7f3, 0x6f306fb, 0x700f809, 0xf805f30b, 0xf300f808, 0xf7080706, 0x60700f8, 0x8f3faf3, 0x4f5f2f7, 0xf7fdf5f4, 0x801f2f7, 0x1f5f304, 0xf2f6f7f7, 0x605f7ff, 0xf2f7f9f3, 0xfaf401f7, 0x0				# 20 length
 
-
-
 DecryptionSpace: .space 400 # 400 bytes of space, more than enough...
 
 End: .asciiz "That's All!"
-Found: .asciiz "Word found: "
+Found: .asciiz "Valid Message Found: "
 NewLine: .asciiz "\n"
 
 # .globl main
@@ -66,9 +64,26 @@ found:
 	li $v0, 4
 	syscall											# print found message
 
-	# move $a0, $t7
-	# li $v0, 4
-	# syscall											# print key
+	la $a0, NewLine
+	li $v0, 4
+	syscall											# print newline
+
+	move $a0, $t7
+	li $v0, 1
+	syscall											# print key
+
+	la $a0, NewLine
+	li $v0, 4
+	syscall											# print newline
+
+	move $a0, $a1
+	li $v0, 4
+	syscall											# print decrypted message
+
+
+	la $a0, NewLine
+	li $v0, 4
+	syscall											# print newline
 
 	la $a0, NewLine
 	li $v0, 4
