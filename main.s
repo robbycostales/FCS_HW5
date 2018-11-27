@@ -18,39 +18,42 @@ DecryptionSpace: .space 400 # 400 bytes of space, more than enough...
 main:
 	la $t3, EncryptedPhrase			# put address of list into $t3
 	li $t7, 0x01010101					# initialize current key
-	li $t6, 0x01010101					# add $t6 to key every iteration
+
 	# iterate through 255 different keys
 mainLoop:
 	move $a0, $t3								# encrypted phrase --> first parameter
-	la $a1, DecryptionSpace			# decrypted space --> second parameter
-	move $a2, $t7								# current key --> third parameter
 
+	move $a2, $t7								# current key --> third parameter
+	beq $a2, 0xFFFFFFFF, end
+
+	la $a1, DecryptionSpace			# decrypted space --> second parameter
 	# save variables to stack
-	addi $sp, $sp, -24
 	sw $a0, 0($sp)
-	sw $a1, 4($sp)
-	sw $a2, 8($sp)
-	sw $t3, 12($sp)
-	sw $t7, 16($sp)
-	sw $t6, 20($sp)
+	sw $a1, -4($sp)
+	sw $a2, -8($sp)
+	sw $t3, -12($sp)
+	sw $t7, -16($sp)
+	sw $t6, -20($sp)
+	addi $sp, $sp, -24
 
 	# input: 		($a0: address of EP; $a1: decrypted string placeholder address; $a2: key K (word))
 	# output:		($v0: 1 if valid, ow 0; $v1 carry)
 	jal AddAndVerify						# check phrase against key
 
-	# save variables to stack
-	lw $a0, 0($sp)
-	lw $a1, 4($sp)
-	lw $a2, 8($sp)
-	lw $t3, 12($sp)
-	lw $t7, 16($sp)
-	lw $t6, 20($sp)
+	# load variables from stack
 	addi $sp, $sp, 24
+	lw $a0, -0($sp)
+	lw $a1, -4($sp)
+	lw $a2, -8($sp)
+	lw $t3, -12($sp)
+	lw $t7, -16($sp)
+	lw $t6, -20($sp)
 
 	beq $v0, 1, Found						# if valid, we found the right key
 addForNext:
+	li $t6, 0x01010101					# add $t6 to key every iteration
 	addu $t7, $t7, $t6
-	bne $t7, 0xFFFFFFFF, mainLoop
+	j mainLoop
 end: 										# if $t7 loops back to 0x00000000, we did not find a solution
 	la $a0, End
 	li $v0, 4
@@ -62,15 +65,16 @@ found:
 	li $v0, 4
 	syscall											# print found message
 
-	move $a0, $t7
-	li $v0, 4
-	syscall											# print key
+	# move $a0, $t7
+	# li $v0, 4
+	# syscall											# print key
 
 	la $a0, NewLine
 	li $v0, 4
 	syscall											# print newline
 	# return to main loop
 	j addForNext
+
 
 # input: 		($a0: encrypted word, $a1: key word, $a2: carry val)
 # output:		($v0: result of addition, $v1: carry val)
@@ -135,7 +139,10 @@ trueIC:
 		jal AddAndVerify
 		beq $v0, 0, invalid		# if invalid, return
 		# if valid
+
+		# lw $t0, 4($sp)
 		lw $t0, -4($a0)
+
 		move $a0, $t0          # want non-zero encrypted word as first input
 		move $a1, $a2          # a2 from AddAndVerify = keyword, second input to WD
 		move $a2, $v1          # carry value transfer
@@ -177,6 +184,6 @@ trueIC:
 		addi $sp, $sp, 16
 		jr $ra
 
-	# terminate program
-	li $v0,10
-	syscall
+	# # terminate program
+	# li $v0,10
+	# syscall
